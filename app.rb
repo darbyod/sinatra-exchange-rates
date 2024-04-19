@@ -15,13 +15,50 @@ get("/") do
   raw_data_string = raw_data.to_s
 
   # convert the string to JSON
-  @parsed_data = JSON.parse(raw_data_string)
+  parsed_data = JSON.parse(raw_data_string)
 
-  # Here, get the currency symbols from the JSON, I recommend starting by 
-  # making it an instance variable (@parsed_data), then showing that 
-  # instance variable in the `views/homepage.erb` view template that you 
-  # are rendering below (use <%= %> ERB tags to render it in that view template).
+  @currencies_keys = parsed_data.fetch("currencies").keys
 
-  # render a view template where I show the symbols
   erb(:homepage)
+end
+
+get("/:from_currency") do
+
+  @original_currency = params.fetch("from_currency")
+
+  # build the API url, including the API key in the query string
+  api_url = "https://api.exchangerate.host/list?access_key=#{ENV["EXCHANGE_RATE_KEY"]}"
+
+  # use HTTP.get to retrieve the API information
+  raw_data = HTTP.get(api_url)
+
+  # convert the raw request to a string
+  raw_data_string = raw_data.to_s
+
+  # convert the string to JSON
+  parsed_data = JSON.parse(raw_data_string)
+
+  @currencies_keys = parsed_data.fetch("currencies").keys
+
+  erb(:step_one)
+end
+
+get("/:from_currency/:to_currency") do
+  @original_currency = params.fetch("from_currency")
+  @destination_currency = params.fetch("to_currency")
+
+  api_url = "https://api.exchangerate.host/convert?access_key=#{ENV.fetch("EXCHANGE_RATE_KEY")}&from=#{@original_currency}&to=#{@destination_currency}&amount=1"
+  
+   # use HTTP.get to retrieve the API information
+   raw_data = HTTP.get(api_url)
+
+   # convert the raw request to a string
+   raw_data_string = raw_data.to_s
+ 
+   # convert the string to JSON
+   parsed_data = JSON.parse(raw_data_string)
+ 
+   @currencies_convert = parsed_data.fetch("result")
+  
+   erb(:step_two)
 end
